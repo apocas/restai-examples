@@ -1,0 +1,19 @@
+[project]
+name = "restai-examples"
+version = "0.0.4"
+authors = [{ name = "Pedro Dias", email = "petermdias@gmail.com" }]
+description = "RESTai Examples"
+readme = "README.md"
+requires-python = ">=3.12"
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+license = "Apache-2.0"
+license-files = ["LICEN[CS]E*"]
+dependencies = ["requests", "restai-functions (>=0.0.4,<0.0.5)", "python-dotenv (>=1.0.1,<2.0.0)"]
+[project.urls]
+Homepage = "https://github.com/apocas/restai-examples"
+
+
