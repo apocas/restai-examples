@@ -1,3 +1,4 @@
+import sys
 from restai_functions import Restai
 import os
 from dotenv import load_dotenv
@@ -17,7 +18,10 @@ stop_all = False
 wait_times = deque(maxlen=5)  # fixed-size history for the last 5 responses
 wait_times_lock = threading.Lock()
 
-# Configurable delay between spawning new threads in seconds
+# New event to signal when any user gets a response
+response_event = threading.Event()
+
+# Configurable delay between launching new users after a response is received
 WAIT_BETWEEN_THREADS = 2  # Adjust as needed
 
 # New helper function to generate random phrases from a Project Gutenberg text
@@ -46,25 +50,31 @@ def simulate_user(user_id):
         with wait_times_lock:
             wait_times.append(elapsed)
         print(f"User {user_id}: Waited for {elapsed:.2f} seconds")
-        time.sleep(random.randint(1, 15))  # random think time
+        response_event.set()  # signal that a response was received
+        time.sleep(random.randint(10, 40))  # random think time
 
-# Spawn threads until the average of the last 5 response times exceeds 60 seconds
+# Spawn an initial user
 threads = []
-user_count = 0
+user_count = 1
+t = threading.Thread(target=simulate_user, args=(user_count,))
+t.start()
+threads.append(t)
 
+# Launch new users when a response is received from any existing user
 while True:
+    # Check average of last 5 responses
     with wait_times_lock:
         if len(wait_times) == 5 and (sum(wait_times) / 5) > 60:
             stop_all = True
-            break
+            print(f"Maximum number of users reached: {user_count}")
+            os._exit(1)
+            
+    response_event.wait()         # wait until a user gets a response
+    response_event.clear()        # clear the event for next signal
+    time.sleep(WAIT_BETWEEN_THREADS)
     user_count += 1
     t = threading.Thread(target=simulate_user, args=(user_count,))
     t.start()
     threads.append(t)
-    time.sleep(WAIT_BETWEEN_THREADS)
+    print(f"Launched new user: {user_count}")  # new print message
 
-# Wait for all threads to finish
-for t in threads:
-    t.join()
-
-print(f"Maximum number of users reached: {user_count}")
