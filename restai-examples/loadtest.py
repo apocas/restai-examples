@@ -6,15 +6,19 @@ import time  # added for sleep and timing
 import random  # new
 import requests  # new
 import re        # new
+from collections import deque  # new import
 
 load_dotenv()
 
 restai = Restai(url=os.environ.get("RESTAI_URL"), api_key=os.environ.get("RESTAI_KEY"))
 
-# Configurable number of simultaneous users
-NUM_USERS = 50  # Modify this to change the number of threads
-# New variable for delay between starting threads in seconds
-WAIT_BETWEEN_THREADS = 2  # Adjust the delay as needed
+# Global variables for tracking response times and stopping all threads
+stop_all = False
+wait_times = deque(maxlen=5)  # fixed-size history for the last 5 responses
+wait_times_lock = threading.Lock()
+
+# Configurable delay between spawning new threads in seconds
+WAIT_BETWEEN_THREADS = 2  # Adjust as needed
 
 # New helper function to generate random phrases from a Project Gutenberg text
 def get_random_phrases(num_phrases=100):
@@ -32,21 +36,35 @@ def get_random_phrases(num_phrases=100):
 QUESTIONS = get_random_phrases(100)
 
 def simulate_user(user_id):
-    while True:
-        # Randomize the question from the list of phrases
+    global stop_all
+    while not stop_all:
         question = random.choice(QUESTIONS)
-        start_time = time.time()  # start timer before call
+        start_time = time.time()
         _ = restai.pedro_inference(question)
-        elapsed = time.time() - start_time  # calculate wait time
+        elapsed = time.time() - start_time
+        # Record the response time in a thread-safe manner
+        with wait_times_lock:
+            wait_times.append(elapsed)
         print(f"User {user_id}: Waited for {elapsed:.2f} seconds")
-        time.sleep(random.randint(1, 15))  # simulate user think time with random delay
+        time.sleep(random.randint(1, 15))  # random think time
 
+# Spawn threads until the average of the last 5 response times exceeds 60 seconds
 threads = []
-for i in range(NUM_USERS):
-    t = threading.Thread(target=simulate_user, args=(i+1,))
+user_count = 0
+
+while True:
+    with wait_times_lock:
+        if len(wait_times) == 5 and (sum(wait_times) / 5) > 60:
+            stop_all = True
+            break
+    user_count += 1
+    t = threading.Thread(target=simulate_user, args=(user_count,))
     t.start()
     threads.append(t)
-    time.sleep(WAIT_BETWEEN_THREADS)  # wait X seconds between starting threads
+    time.sleep(WAIT_BETWEEN_THREADS)
 
+# Wait for all threads to finish
 for t in threads:
     t.join()
+
+print(f"Maximum number of users reached: {user_count}")
