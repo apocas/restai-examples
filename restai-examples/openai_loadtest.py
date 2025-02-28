@@ -58,9 +58,10 @@ def simulate_user(user_id):
         # Record the response time in a thread-safe manner
         with wait_times_lock:
             wait_times.append(elapsed)
-        print(f"User {user_id}: Waited for {elapsed:.2f} seconds")
+        #print(f"User {user_id}: Waited for {elapsed:.2f} seconds")
         response_event.set()  # signal that a response was received
-        time.sleep(random.randint(20, 40))  # random think time
+        #time.sleep(random.randint(20, 40))  # random think time
+        time.sleep(10)
 
 # Spawn an initial user
 threads = []
@@ -73,6 +74,8 @@ threads.append(t)
 while True:
     # Check average of last 5 responses
     with wait_times_lock:
+        if len(wait_times) == 5:
+            print(f"Average response time: {sum(wait_times) / 5:.2f} seconds")
         if len(wait_times) == 5 and (sum(wait_times) / 5) > 60:
             stop_all = True
             print(f"Maximum number of users reached: {user_count}")
