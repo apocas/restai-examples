@@ -8,10 +8,14 @@ import random  # new
 import requests  # new
 import re        # new
 from collections import deque  # new import
+from openai import OpenAI
 
 load_dotenv()
 
-restai = Restai(url=os.environ.get("RESTAI_URL"), api_key=os.environ.get("RESTAI_KEY"))
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+    base_url=os.environ.get("OPENAI_BASE_URL")
+)
 
 # Global variables for tracking response times and stopping all threads
 stop_all = False
@@ -44,7 +48,12 @@ def simulate_user(user_id):
     while not stop_all:
         question = random.choice(QUESTIONS)
         start_time = time.time()
-        _ = restai.pedro_inference(question)
+        _ = client.chat.completions.create(
+            model="shuyuej/Llama-3.3-70B-Instruct-GPTQ",
+            messages=[
+               {"role": "user", "content": question}
+            ]
+        )
         elapsed = time.time() - start_time
         # Record the response time in a thread-safe manner
         with wait_times_lock:

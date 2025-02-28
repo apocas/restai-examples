@@ -12,7 +12,7 @@ classifiers = [
 ]
 license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
-dependencies = ["requests", "restai-functions (>=0.0.4,<0.0.5)", "python-dotenv (>=1.0.1,<2.0.0)"]
+dependencies = ["requests", "restai-functions (>=0.0.4,<0.0.5)", "python-dotenv (>=1.0.1,<2.0.0)", "openai (>=1.65.1,<2.0.0)"]
 [project.urls]
 Homepage = "https://github.com/apocas/restai-examples"
 
