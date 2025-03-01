@@ -76,7 +76,7 @@ while True:
     with wait_times_lock:
         if len(wait_times) == 5:
             print(f"Average response time: {sum(wait_times) / 5:.2f} seconds")
-        if len(wait_times) == 5 and (sum(wait_times) / 5) > 60:
+        if len(wait_times) == 5 and (sum(wait_times) / 5) > 30:
             stop_all = True
             print(f"Maximum number of users reached: {user_count}")
             os._exit(1)
